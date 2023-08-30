@@ -7,7 +7,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 50Gi
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: Service
@@ -22,7 +22,7 @@ spec:
   ports:
   - port: 5432
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: citus-master
@@ -38,7 +38,14 @@ spec:
     spec:
       containers:
       - name: citus
-        image: citusdata/citus:7.3.0
+        image: citusdata/citus:10.0.3-pg12
+        lifecycle:
+          postStart:
+            exec:
+              command: 
+              - /bin/sh
+              - -c
+              - if [ ${POD_IP} ]; then psql --username=postgres --command="SELECT citus_set_coordinator_host('citus-master', 5432);" ; fi
         ports:
         - containerPort: 5432
         env:
